@@ -6,6 +6,8 @@
 
         public EntryCreationStatus CreateDailyEntryFile();
 
+        public string GetTemplate();
+
         public bool PublishToBlog(); // Move to other interface?
     }
 }

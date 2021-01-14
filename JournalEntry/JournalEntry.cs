@@ -9,28 +9,39 @@ namespace JournalEntry
 
     public class JournalEntry : IJournal
     {
-        public string FileName { get; set; }
+        public string FileNamePrefix { get; set; }
         public string FileHeader { get; set; }
 
-        public JournalEntry(string fileName = null, string header = null)
+        public string JournalDirectory { get; private set; }
+
+        public string TemplateFile { get; private set; }
+
+        // TODO: Move to config file? and fix these *Sfh dependencies
+        private const string designatedJournalDirectory = "C:\\Users\\Stephen\\Documents\\Writing\\Journal";
+        private const string templateFileSfh = "Journal_TODOs.md";
+        private const string fileNamePrefixSfh = "StephenLog_";
+
+        // TODO: fix 
+        public JournalEntry(string fileNamePrefix = fileNamePrefixSfh,
+                            string journalDirectory = designatedJournalDirectory, 
+                            string templateFile = templateFileSfh)
         {
-            FileName = fileName;
-            FileHeader = FileHeader;
+            FileNamePrefix = fileNamePrefix;
+            // Designate the path for the log
+            JournalDirectory = journalDirectory;
+            TemplateFile = templateFile;
         }
 
         public EntryCreationStatus CreateDailyEntryFile()
         {
-            // Get the path for the log
-            string journalDirectory = $"C:\\Users\\Stephen\\Documents\\Writing\\Journal";
-
-            // TODO: Get the write Date format
             string today = DateTime.Now.ToString("MMMdd_yyyy");
+            string fileName = $"{FileNamePrefix}_{today}.md";
 
-            string filename = $"StephenLog_{today}.md";
-
-            string fullPath = $"{journalDirectory}\\{filename}";
+            string fullPath = $"{JournalDirectory}\\{fileName}";
 
             string headerText = GetHeaderText();
+
+            string templateText = GetTemplate();
 
             try
             {
@@ -39,13 +50,17 @@ namespace JournalEntry
                     using (var fileStream = System.IO.File.Create(fullPath))
                     {
                         byte[] headerTextBytes = new UTF8Encoding(true).GetBytes(headerText);
+                        byte[] templateTextBytes = new UTF8Encoding(true).GetBytes(templateText);
 
                         fileStream.Write(headerTextBytes);
+
+                        fileStream.Write(templateTextBytes);
                     }
                 }
                 else
                 {
                     LogJournalCreation();
+                    return EntryCreationStatus.EntryExists;
                 }
             }
             catch (Exception ex)
@@ -108,5 +123,22 @@ namespace JournalEntry
             return false;
         }
 
+        public string GetTemplate()
+        {
+            string templateString = null;
+
+            string fullPath = $"{JournalDirectory}\\{TemplateFile}";
+
+            try
+            {
+                templateString = File.ReadAllText(fullPath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            return templateString;
+        }
     }
 }
