@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
 namespace JournalEntry
 {
@@ -58,15 +59,19 @@ namespace JournalEntry
                 {
                     var fileInfo = new System.IO.FileInfo(fullPath);
 
-                     long length = fileInfo.Length;
+                    long length = fileInfo.Length;
 
-                    // TODO: consider changing to 996 which should eliminate checking for the string
-                    if (length < 997) // TODO: revisit this
+                    // TODO: Move these elsewhere
+                    string emptyEntryToken = "***EOFEOF_I did not write a journal entry today_EOFEOF***";
+                    int minimumFileSize = 1143;
+
+                    bool hasEmptyEntryToken = File.ReadLines(fullPath).Contains(emptyEntryToken);
+
+                    if ((length < minimumFileSize) || (hasEmptyEntryToken))
                     {
-                        // var reader = fileInfo.OpenRead(); // TODO: change to using                       
 
                         File.Delete(fullPath);
-                    }
+                    }                    
                     else
                     {
                         foundEntry = true; // only delete multiple entries if created on successive days
