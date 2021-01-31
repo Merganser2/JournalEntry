@@ -63,7 +63,7 @@ namespace JournalEntry
 
                     // TODO: Move these elsewhere
                     string emptyEntryToken = "***EOFEOF_I did not write a journal entry today_EOFEOF***";
-                    int minimumFileSize = 1143;
+                    int minimumFileSize = 1159;
 
                     bool hasEmptyEntryToken = File.ReadLines(fullPath).Contains(emptyEntryToken);
 
