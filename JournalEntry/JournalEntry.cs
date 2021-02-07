@@ -11,8 +11,12 @@ namespace JournalEntry
 
     // public Tuple Location {double latitude, double longitude };
 
+
     public class JournalEntry : IJournal, ISunriseSunset
     {
+        public static readonly string emptyEntryToken = "***EOFEOF_No Journal Entry Today_EOFEOF***";
+        public static readonly int minimumFileSize = 1159;
+
         public string FileNamePrefix { get; set; }
         public string FileHeader { get; set; }
 
@@ -81,8 +85,9 @@ namespace JournalEntry
 
             string headerText = $"StephenLog {today}\n" +
                                 "======================================\n\n";
+            headerText += $"{JournalEntry.emptyEntryToken}\n";  
 
-                return headerText;
+            return headerText;
         }
 
         bool IJournal.PublishToBlog()
@@ -185,7 +190,7 @@ namespace JournalEntry
 
             var sunriseLocal = TimeZoneInfo.ConvertTimeFromUtc(sunriseUtcDateTime, TimeZoneInfo.Local);
 
-            return sunriseLocal.ToString();
+            return sunriseLocal.ToShortTimeString();
         }
 
         public string GetTodaySunset(string latitude, string longitude)

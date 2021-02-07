@@ -34,7 +34,7 @@ namespace JournalEntry
 
         }
 
-        // Should this be part of JournalEntry class, or?? TODO:
+        // TODO: Should this be part of JournalEntry class, or its own removal class, or? 
         private static void RemoveEmptyEntries(string fileNamePrefix)
         {
             // Get filename of prior day
@@ -61,17 +61,14 @@ namespace JournalEntry
 
                     long length = fileInfo.Length;
 
-                    // TODO: Move these elsewhere
-                    string emptyEntryToken = "***EOFEOF_I did not write a journal entry today_EOFEOF***";
-                    int minimumFileSize = 1159;
+                    bool hasEmptyEntryToken = File.ReadLines(fullPath).Contains(JournalEntry.emptyEntryToken);
 
-                    bool hasEmptyEntryToken = File.ReadLines(fullPath).Contains(emptyEntryToken);
-
-                    if ((length < minimumFileSize) || (hasEmptyEntryToken))
+                    // For now, to be on the safe side, the file must be both below minimum AND have the token
+                    if ((length < JournalEntry.minimumFileSize) && (hasEmptyEntryToken))
                     {
-
                         File.Delete(fullPath);
-                    }                    
+                        Console.WriteLine($"Deleted empty entry {fullPath}."); // TODO: write to log
+                    }
                     else
                     {
                         foundEntry = true; // only delete multiple entries if created on successive days
@@ -79,9 +76,6 @@ namespace JournalEntry
                 }
                 entriesChecked++;
             }
-
-            // Read file and check filesize? and string indicating nothing entered
-
         }
     }
 }
