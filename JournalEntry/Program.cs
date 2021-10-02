@@ -12,7 +12,7 @@ namespace JournalEntry
 
             var outcome = journalEntry.CreateDailyEntryFile();
 
-            // TODO: Find better way to do this? 
+            // TODO: Find better way to do this? testing a commit
             // ALSO: journalEntry.CreationStatus(); 
             string status;
             if (outcome == EntryCreationStatus.Success)
