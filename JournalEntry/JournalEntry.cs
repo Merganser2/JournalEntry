@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace JournalEntry
@@ -15,29 +16,29 @@ namespace JournalEntry
     public class JournalEntry : IJournal, ISunriseSunset
     {
         public static readonly string emptyEntryToken = "***EOFEOF_No Journal Entry Today_EOFEOF***";
-        public static readonly int minimumFileSize = 1159;
+        public static readonly int minimumFileSize = 687;
 
         public string FileNamePrefix { get; set; }
         public string FileHeader { get; set; }
 
         public string JournalDirectory { get; private set; }
 
-        public string TemplateFile { get; private set; }
+        public string TemplateFilePath { get; private set; }
 
         // TODO: Move to config file? and fix these *Sfh dependencies
-        private const string designatedJournalDirectory = "C:\\Users\\Stephen\\Documents\\Writing\\Journal";
+        private const string baseJournalDirectory = "C:\\Users\\Stephen\\Documents\\Writing\\Journal";
         private const string templateFileSfh = "Journal_TODOs.md";
         private const string fileNamePrefixSfh = "StephenLog_";
 
         // TODO: fix 
         public JournalEntry(string fileNamePrefix = fileNamePrefixSfh,
-                            string journalDirectory = designatedJournalDirectory, 
+                            string journalDirectory = baseJournalDirectory, 
                             string templateFile = templateFileSfh)
         {
             FileNamePrefix = fileNamePrefix;
             // Designate the path for the log
-            JournalDirectory = journalDirectory;
-            TemplateFile = templateFile;
+            JournalDirectory = GetJournalDirectory(baseJournalDirectory); // journalDirectory;
+            TemplateFilePath = $"{baseJournalDirectory}\\{templateFile}";
         }
 
         public EntryCreationStatus CreateDailyEntryFile()
@@ -53,6 +54,8 @@ namespace JournalEntry
 
             try
             {
+                if (!Directory.Exists(JournalDirectory))
+                    Directory.CreateDirectory(JournalDirectory);
                 if (!File.Exists(fullPath))
                 {
                     using (var fileStream = System.IO.File.Create(fullPath))
@@ -70,6 +73,9 @@ namespace JournalEntry
                     LogJournalCreation();
                     return EntryCreationStatus.EntryExists;
                 }
+
+                // TODO: Move this somewhere else...
+                removeEmptyEntries(FileNamePrefix);
             }
             catch (Exception ex)
             {
@@ -136,8 +142,6 @@ namespace JournalEntry
         {
             string templateString = null;
 
-            string fullPath = $"{JournalDirectory}\\{TemplateFile}";
-
             try
             {
                 // TODO: Get location another way
@@ -152,7 +156,7 @@ namespace JournalEntry
                 // templateString += GetTodaySunset(lat, lon);
 
                 // This gets the TODOs at the end
-                templateString += File.ReadAllText(fullPath);
+                templateString += File.ReadAllText(TemplateFilePath);
             }
             catch (Exception ex)
             {
@@ -199,5 +203,75 @@ namespace JournalEntry
 
             return sunset;
         }
+
+//        public enum MonthFolder { JanFeb, MarchApril, MayJune, JulyAug, SeptOct, NovDec };
+        static string[] FolderNames = { "JanFeb", "MarchApril", "MayJune", "JulyAug", "SeptOct", "NovDec" };
+
+        private string GetJournalDirectory(string baseDirectory)
+        {
+            var today = DateTime.Today;
+            int month = today.Month;
+            string year = today.ToString("yy");
+
+            string monthFolder = getMonthDirectoryName(month);
+
+            string dirSuffix = $"{monthFolder}_{year}";
+
+            return baseDirectory + "\\" + dirSuffix;
+        }
+
+        // TODO: Write a unit test.  1/2 = 1, 2/2 = 1, 3/2 = 2, etc...
+        private string getMonthDirectoryName(int month)
+        {
+            int monthGroup = (month / 2) - 1; 
+ 
+            return FolderNames[monthGroup];
+        }
+
+        private void removeEmptyEntries(string fileNamePrefix)
+        {
+            // Get filename of prior day
+            bool foundEntry = false;
+            int entriesChecked = 0; // one week?
+
+            while (!foundEntry && entriesChecked <= 7) // todo create constant
+            {
+                var daysBack = -(entriesChecked + 1);
+
+                // TODO: Extract formatting?
+                var yesterday = DateTime.Now.AddDays(daysBack).ToString("MMMdd_yyyy");
+
+                string journalDirectory = $"C:\\Users\\Stephen\\Documents\\Writing\\Journal";
+
+                string filename = $"{fileNamePrefix}_{yesterday}.md";
+
+                string fullPath = $"{JournalDirectory}\\{filename}";
+
+                // if file contains "***EOFEOF_I did not write a journal entry today_EOFEOF***" delete it
+                if (File.Exists(fullPath))
+                {
+                    var fileInfo = new System.IO.FileInfo(fullPath);
+
+                    long length = fileInfo.Length;
+
+                    bool hasEmptyEntryToken = File.ReadLines(fullPath).Contains(JournalEntry.emptyEntryToken);
+
+                    // For now, to be on the safe side, the file must be both below minimum AND have the token
+                    // if ((length < JournalEntry.minimumFileSize) && (hasEmptyEntryToken))
+                    // Forget about filesize for now
+                    if (hasEmptyEntryToken)
+                    {
+                        File.Delete(fullPath);
+                        Console.WriteLine($"Deleted empty entry {fullPath}."); // TODO: write to log
+                    }
+                    else
+                    {
+                        foundEntry = true; // only delete multiple entries if created on successive days
+                    }
+                }
+                entriesChecked++;
+            }
+        }
+
     }
 }

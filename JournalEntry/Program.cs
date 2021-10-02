@@ -30,7 +30,8 @@ namespace JournalEntry
 
             Console.WriteLine(status);
 
-            RemoveEmptyEntries(journalEntry.FileNamePrefix);
+            // TODO: Add this back after getting path to subfolder worked out - or move to JournalEntry class?
+            // RemoveEmptyEntries(journalEntry.FileNamePrefix);
 
         }
 
@@ -64,7 +65,9 @@ namespace JournalEntry
                     bool hasEmptyEntryToken = File.ReadLines(fullPath).Contains(JournalEntry.emptyEntryToken);
 
                     // For now, to be on the safe side, the file must be both below minimum AND have the token
-                    if ((length < JournalEntry.minimumFileSize) && (hasEmptyEntryToken))
+                    // if ((length < JournalEntry.minimumFileSize) && (hasEmptyEntryToken))
+                    // Forget about filesize for now
+                    if (hasEmptyEntryToken)
                     {
                         File.Delete(fullPath);
                         Console.WriteLine($"Deleted empty entry {fullPath}."); // TODO: write to log
