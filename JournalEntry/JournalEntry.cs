@@ -223,7 +223,7 @@ namespace JournalEntry
         // TODO: Write a unit test.  1/2 = 1, 2/2 = 1, 3/2 = 2, etc...
         private string getMonthDirectoryName(int month)
         {
-            int monthGroup = (month / 2) - 1; 
+            int monthGroup = ((month + 1)/ 2) - 1; 
  
             return FolderNames[monthGroup];
         }
