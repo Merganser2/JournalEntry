@@ -52,6 +52,8 @@ namespace JournalEntry
 
             string templateText = GetTemplate();
 
+            EntryCreationStatus creationStatus = EntryCreationStatus.Success;
+
             try
             {
                 if (!Directory.Exists(JournalDirectory))
@@ -70,19 +72,21 @@ namespace JournalEntry
                 }
                 else
                 {
-                    LogJournalCreation();
-                    return EntryCreationStatus.EntryExists;
+                    EntryNotCreated();
+                    creationStatus = EntryCreationStatus.EntryExists;
                 }
-
-                // TODO: Move this somewhere else...
-                removeEmptyEntries(FileNamePrefix);
             }
-            catch (Exception ex)
+            catch 
             {
-                LogJournalCreation(true);
+                EntryNotCreated(true);
                 return EntryCreationStatus.Failure;
             }
-            return EntryCreationStatus.Success;
+
+            // TODO: Separate out and call from Main somehow
+            // Removes prior entries but only if successive days 
+            RemoveEmptyEntries(FileNamePrefix);
+
+            return creationStatus;
         }
 
         public string GetHeaderText()
@@ -101,20 +105,17 @@ namespace JournalEntry
             throw new NotImplementedException();
         }
 
-        // TODO: Reconsider how to do this
-        public bool LogJournalCreation(bool failure = false)
+        public bool EntryNotCreated(bool failure = false)
         {
-            // Get the path for the log
-            string journalDirectory = $"C:\\Users\\Stephen\\Documents\\Writing\\Journal";
+//            string journalDirectory = $"C:\\Users\\Stephen\\Documents\\Writing\\Journal";
 
-            // TODO: Get the write Date format
             string today = DateTime.Now.ToString("MMMdd_yyyy");
 
             string statusMsg = "FailedToCreateEntry";
 
             string filename = $"{statusMsg}_{today}.md";
 
-            string fullPath = $"{journalDirectory}\\{filename}";
+            string fullPath = $"{JournalDirectory}\\{filename}";
 
             string headerText = failure ? "Unknown error" : "Journal entry already present"; // GetHeaderText();
 
@@ -228,7 +229,7 @@ namespace JournalEntry
             return FolderNames[monthGroup];
         }
 
-        private void removeEmptyEntries(string fileNamePrefix)
+        private void RemoveEmptyEntries(string fileNamePrefix)
         {
             // Get filename of prior day
             bool foundEntry = false;
@@ -241,7 +242,7 @@ namespace JournalEntry
                 // TODO: Extract formatting?
                 var yesterday = DateTime.Now.AddDays(daysBack).ToString("MMMdd_yyyy");
 
-                string journalDirectory = $"C:\\Users\\Stephen\\Documents\\Writing\\Journal";
+                // string journalDirectory = $"C:\\Users\\Stephen\\Documents\\Writing\\Journal";
 
                 string filename = $"{fileNamePrefix}_{yesterday}.md";
 
